@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/daniellcas/streaming-video-mp4/cmd/worker"
 	"github.com/daniellcas/streaming-video-mp4/internal/config"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
@@ -14,13 +15,18 @@ import (
 func main() {
 	cfg := loadConfig()
 
-	s := http.NewServeMux()
+	// Processar video mp4 em hls
+	go worker.Execute(cfg)
 
+	s := http.NewServeMux()
 	s.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello"))
 	})
 
-	log.Fatal().Err(http.ListenAndServe(":"+cfg.Port, s)).Msg("Error em subir o servidor")
+	err := http.ListenAndServe(":"+cfg.Port, s)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error em subir o servidor")
+	}
 }
 
 func loadConfig() *config.Config {
